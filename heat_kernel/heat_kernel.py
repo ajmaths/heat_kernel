@@ -13,27 +13,34 @@ def create_pygsp_graph(G_n):
     G.compute_laplacian()
     return G
 
-
 def heat_kernels_topk(graph, t_values, k=50):
     """
-    Compute heat kernels using only the largest k eigenpairs.
-
-    Parameters:
-        graph (pg.graphs.Graph): PyGSP graph
-        t_values (list): diffusion times
-        k (int): number of largest eigenvalues to compute
+    Compute heat kernels using only the largest k eigenpairs,
+    sorted so that evals[0] = smallest, evals[-1] = largest of the computed k eigenvalues.
     """
     # Convert Laplacian to sparse format
     L_sparse = sp.csr_matrix(graph.L)
+    n = L_sparse.shape[0]
+    
+    # Safety check
+    if k >= n:
+        k = n - 1
 
-    # Get k largest eigenvalues/eigenvectors
+    # Compute k largest eigenvalues/eigenvectors
     evals, evecs = eigsh(L_sparse, k=k, which='LA')
 
+    # Sort ascending
+    idx = np.argsort(evals)
+    evals = evals[idx]
+    evecs = evecs[:, idx]
+
+    # Compute heat kernels
     kernels = {}
     for t in t_values:
         exp_evals = np.exp(-t * evals)
         kernels[t] = evecs @ np.diag(exp_evals) @ evecs.T
-    return kernels
+
+    return kernels, evals, evecs
 
 
 def diffusion_distance_matrices(hk_dict):
