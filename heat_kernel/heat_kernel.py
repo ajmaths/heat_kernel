@@ -30,7 +30,12 @@ def heat_kernels_topk(graph, t_values, k=50):
     evals, evecs = eigsh(L_sparse, k=k, which='LA')
 
     # Sort ascending
-    idx = np.argsort(evals)
+    #idx = np.argsort(evals)
+    #evals = evals[idx]
+    #evecs = evecs[:, idx]
+
+    # Sort descending (largest → smallest)
+    idx = np.argsort(evals)[::-1]
     evals = evals[idx]
     evecs = evecs[:, idx]
 
